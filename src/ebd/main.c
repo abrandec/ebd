@@ -1,4 +1,4 @@
-#include "dsm.h"
+#include "disasm.h"
 
 #include "../common/assets/assets.h"
 #include "../common/cmd/argparse/argparse.h"
@@ -27,7 +27,7 @@ static const char *const usages[] = {
 // @param input: input bytecode
 void load_bytecode_input(char *input, char *filename) {
   int file_size = strlen(input);
-  parse(input, filename);
+  disasm(input, filename);
 }
 
 // load bytecode from file
@@ -40,7 +40,7 @@ void load_bytecode_file(char *file, char *filename) {
   file = read_file_fmmap(fd, file, &file_size);
 
   file == NULL ? exit(1) : 0;
-  parse(file, filename);
+  disasm(file, filename);
   safe_munmap(file, file_size);
 }
 
