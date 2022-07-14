@@ -12,6 +12,18 @@ make
 ./bin/ebd
 ```
 
+### Sample
+```
+./ebd --input 600160020100 --output sample.etk
+
+sample.etk:
+
+PUSH1 0x01
+PUSH1 0x02
+ADD
+STOP
+```
+
 # Testing
 ```
 ./bin/tests/main_t

@@ -33,6 +33,7 @@
         "valarray": "c",
         "variant": "c",
         "*.inc": "c",
-        "*.rh": "c"
+        "*.rh": "c",
+        "stdio.h": "c"
     }
 }

@@ -7,7 +7,7 @@ CC := clang
 LIBS := -lm
 FLAGS := -Oz
 
-UTILS := src/errors/errors.c src/common/utils/hex_utils/hex_utils.c src/common/cmd/argparse/argparse.c src/common/io/io.c src/ebd/dsm.c
+UTILS := src/errors/errors.c src/common/utils/hex_utils/hex_utils.c src/common/cmd/argparse/argparse.c src/common/io/io.c src/ebd/disasm.c
 
 TESTS := tests/opcodes_t/opcodes_t.c tests/test_utils/assert.c
 

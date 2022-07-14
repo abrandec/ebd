@@ -1,6 +1,8 @@
 #ifndef OP_NAMES_H
 #define OP_NAMES_H
 
+#pragma GCC diagnostic ignored "-Wmacro-redefined"
+
 #define NULL 0
 
 static const char *op_names[256] = {
