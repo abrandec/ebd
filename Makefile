@@ -1,4 +1,4 @@
-# Vision EVM
+# EBD (Ethereum Bytecode Disassembler)
 # Author: Abran DeCarlo
 # LICENSE: AGPL-3.0-ONLY
 
@@ -20,7 +20,7 @@ all: ebd
 tests: main_t	
 
 #								 
-#		  Sample Programs		
+#		  Program		
 #								 
 
 # EBD (Ethereum Bytecode Disassembler)
