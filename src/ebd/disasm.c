@@ -71,7 +71,7 @@ int read_push(int *opcode, int *total_size, int *counter, bool is_push) {
     switch (is_push) {
     case 0:
       *counter += *opcode - 0x5F;
-      // account for whitespace, 0x, \n
+      // account for ' ', '0', 'x'
       *total_size += ((*opcode - 0x5F) * 2) + 3;
       return 0;
     case 1:
@@ -96,10 +96,12 @@ int validate_bytecode(char *bytecode, int *total_opcodes) {
   // validate bytecode size by checking if its even or odd (really lazy check,
   // ik)
   bytecode_size % 2 ? print_exit(bytecode_invalid_err) : 0;
+
   int i = 0;
   for (; i < bytecode_len; ++i) {
     opcode = hex_char2int(bytecode, 2 * i);
     read_push(&opcode, &total_file_size, &i, false);
+    i >= bytecode_len ? print_exit(bytecode_invalid_err) : 0;
     ++total_ops;
     total_file_size += op_char_len[opcode];
   }
@@ -119,7 +121,7 @@ int validate_bytecode(char *bytecode, int *total_opcodes) {
 void parser(char *buf, char *bytes, int *opcode, int *buf_offset,
             int *bytecode_offset) {
 
-  // just passing in random pointers to use this function, only opcode && true
+  // just passing in random pointers to use this function, only opcode && is_push
   // are used
   int push_val = read_push(opcode, buf_offset, bytecode_offset, true);
 
@@ -136,7 +138,7 @@ void parser(char *buf, char *bytes, int *opcode, int *buf_offset,
     buf[*buf_offset] = 'x';
     ++*buf_offset;
 
-    // bytes to eat from push opcode
+    // num bytes to eat from push opcode
     int nom = push_val * 2;
     // increment offset to consume bytes
     *bytecode_offset += 2;
