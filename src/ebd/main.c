@@ -25,14 +25,14 @@ static const char *const usages[] = {
 
 // load bytecode from input
 // @param input: input bytecode
-void load_bytecode_input(char *input) {
+void load_bytecode_input(char *input, char *filename) {
   int file_size = strlen(input);
-  parse(input);
+  parse(input, filename);
 }
 
 // load bytecode from file
 // @param file: file to load bytecode from
-void load_bytecode_file(char *file) {
+void load_bytecode_file(char *file, char *filename) {
   FILE *fd;
 
   long file_size;
@@ -40,7 +40,7 @@ void load_bytecode_file(char *file) {
   file = read_file_fmmap(fd, file, &file_size);
 
   file == NULL ? exit(1) : 0;
-  parse(file);
+  parse(file, filename);
   safe_munmap(file, file_size);
 }
 
@@ -50,6 +50,7 @@ int main(int argc, const char *argv[]) {
   // to hold input and file chars from argparse
   char *file = NULL;
   char *input = NULL;
+  char *filename = NULL;
 
   // param variables
   int debug = 0;
@@ -59,7 +60,7 @@ int main(int argc, const char *argv[]) {
       OPT_GROUP("Commands"),
       OPT_STRING('i', "input", &input, "input bytecode"),
       OPT_STRING('f', "file", &file, "file with bytecode", NULL, 0, 0),
-      OPT_BOOLEAN('o', "output", &debug,
+      OPT_STRING('o', "output", &filename,
                   "output file location (default terminal output)", NULL, 0, 0),
       OPT_HELP(),
       OPT_END(),
@@ -74,14 +75,14 @@ int main(int argc, const char *argv[]) {
   // │   INPUT BYTECODE  │
   // └───────────────────┘
   if (input != NULL) {
-    load_bytecode_input(input);
+    load_bytecode_input(input, filename);
   }
 
   // ┌───────────────────────────┐
   // │   READ FILE WITH BYTCODE  │
   // └───────────────────────────┘
   if (file != NULL) {
-    load_bytecode_file(file);
+    load_bytecode_file(file, filename);
   }
 
   // ┌───────────────────────────────────┐
