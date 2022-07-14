@@ -13,8 +13,6 @@
 #include <string.h>
 #include <sys/mman.h>
 
-// To get the compiler to not complain about formating for our custom integer
-// types
 #pragma GCC diagnostic ignored "-Wformat"
 
 // argparse
@@ -25,6 +23,7 @@ static const char *const usages[] = {
 
 // load bytecode from input
 // @param input: input bytecode
+// @param filename: filename to write disassembled bytecode to
 void load_bytecode_input(char *input, char *filename) {
   int file_size = strlen(input);
   disasm(input, filename);
@@ -32,15 +31,16 @@ void load_bytecode_input(char *input, char *filename) {
 
 // load bytecode from file
 // @param file: file to load bytecode from
+// @param filename: filename of file to load bytecode from
 void load_bytecode_file(char *file, char *filename) {
   FILE *fd;
-
   long file_size;
 
   file = read_file_fmmap(fd, file, &file_size);
-
   file == NULL ? exit(1) : 0;
+  
   disasm(file, filename);
+  
   safe_munmap(file, file_size);
 }
 
