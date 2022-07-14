@@ -24,23 +24,23 @@ static const char *const usages[] = {
 // load bytecode from input
 // @param input: input bytecode
 // @param filename: filename to write disassembled bytecode to
-void load_bytecode_input(char *input, char *filename) {
+void load_bytecode_input(char *input, char *filename, bool output_bool) {
   int file_size = strlen(input);
-  disasm(input, filename, true);
+  disasm(input, filename, output_bool);
 }
 
 // load bytecode from file
 // @param file: file to load bytecode from
 // @param filename: filename of file to load bytecode from
-void load_bytecode_file(char *file, char *filename) {
+void load_bytecode_file(char *file, char *filename, bool output_bool) {
   FILE *fd;
   long file_size;
 
   file = read_file_fmmap(fd, file, &file_size);
   file == NULL ? exit(1) : 0;
-  
-  disasm(file, filename, false);
-  
+
+  disasm(file, filename, output_bool);
+
   safe_munmap(file, file_size);
 }
 
@@ -50,18 +50,16 @@ int main(int argc, const char *argv[]) {
   // to hold input and file chars from argparse
   char *file = NULL;
   char *input = NULL;
-  char *filename = NULL;
+  char *output = NULL;
 
-  // param variables
-  int debug = 0;
-  int perms = 0;
+  bool output_bool = true;
 
   struct argparse_option options[] = {
       OPT_GROUP("Commands"),
       OPT_STRING('i', "input", &input, "input bytecode"),
       OPT_STRING('f', "file", &file, "file with bytecode", NULL, 0, 0),
-      OPT_STRING('o', "output", &filename,
-                  "output file location (default terminal output)", NULL, 0, 0),
+      OPT_STRING('o', "output", &output,
+                 "output file location (default terminal output)", NULL, 0, 0),
       OPT_HELP(),
       OPT_END(),
   };
@@ -74,15 +72,17 @@ int main(int argc, const char *argv[]) {
   // ┌───────────────────┐
   // │   INPUT BYTECODE  │
   // └───────────────────┘
-  if (input != NULL) {
-    load_bytecode_input(input, filename);
+  if (input != NULL && file == NULL) {
+    output == NULL ? output_bool = false : 0;
+    load_bytecode_input(input, output, output_bool);
   }
 
   // ┌───────────────────────────┐
   // │   READ FILE WITH BYTCODE  │
   // └───────────────────────────┘
-  if (file != NULL) {
-    load_bytecode_file(file, filename);
+  if (file != NULL && input == NULL) {
+    output == NULL ? output_bool = false : 0;
+    load_bytecode_file(file, output, output_bool);
   }
 
   // ┌───────────────────────────────────┐
