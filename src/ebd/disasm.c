@@ -121,8 +121,8 @@ int validate_bytecode(char *bytecode, int *total_opcodes) {
 void parser(char *buf, char *bytes, int *opcode, int *buf_offset,
             int *bytecode_offset) {
 
-  // just passing in random pointers to use this function, only opcode && is_push
-  // are used
+  // just passing in random pointers to use this function, only opcode &&
+  // is_push are used
   int push_val = read_push(opcode, buf_offset, bytecode_offset, true);
 
   if (push_val != 0) {
@@ -181,6 +181,42 @@ void loopty_loop(char *buf, char *bytes, int filesize, int *total_opcodes) {
   }
 }
 
+// create temp file for disassembled bytecode
+// @param bytecode: bytecode
+// @param filename: filename to create
+void _temp_file(char *bytes, int filesize, int *total_opcodes) {
+  const char *filename = "/tmp/ebd.temp";
+
+  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+
+  if (write(fd, "", filesize - 1) == -1) {
+    close(fd);
+    perror("Error writing last byte of the file");
+    exit(EXIT_FAILURE);
+  }
+
+  char *map = mmap(0, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (map == MAP_FAILED) {
+    close(fd);
+    perror("Error mmapping the file");
+    exit(EXIT_FAILURE);
+  }
+
+  loopty_loop(map, bytes, filesize, total_opcodes);
+
+  printf("%s\n", map);
+
+  // Don't forget to free the mmapped memory
+  if (munmap(map, filesize) == -1) {
+    close(fd);
+    perror("Error un-mmapping the file");
+    exit(EXIT_FAILURE);
+  }
+
+  // Un-mmaping doesn't close the file, so we still need to do that.
+  close(fd);
+}
+
 // create file from bytecode
 // @param bytecode: bytecode
 // @param filename: filename to create
@@ -226,7 +262,7 @@ void _create_file(char *bytes, char *filename, int filesize,
   close(fd);
 }
 
-void disasm(char *bytes, char *filename) {
+void disasm(char *bytes, char *filename, bool output) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
   bytes == NULL          ? print_exit(char_null_err)
@@ -237,9 +273,8 @@ void disasm(char *bytes, char *filename) {
 
   int file_size = validate_bytecode(bytes, &total_opcodes);
 
-  // check if file size is less than 1 byte or causes segfault
-  file_size < 2 ? print_exit(bytecode_min_err) : 0;
-
-  filename == NULL ? print_exit(bytecode_min_err)
-                   : _create_file(bytes, filename, file_size, &total_opcodes);
+  // if output == true then create a file with the disassembled bytecode, else
+  // create a temp file to mmap and ouput disassembled bytecode to stdout
+  output ? _create_file(bytes, filename, file_size, &total_opcodes)
+         : _temp_file(bytes, file_size, &total_opcodes);
 }
