@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "io.h": "c",
+        "argparse.h": "c",
+        "stdlib.h": "c",
+        "wait.h": "c",
+        "unistd.h": "c",
+        "string.h": "c"
+    }
+}
