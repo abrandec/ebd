@@ -26,7 +26,7 @@ static const char *const usages[] = {
 // @param filename: filename to write disassembled bytecode to
 void load_bytecode_input(char *input, char *filename) {
   int file_size = strlen(input);
-  disasm(input, filename);
+  disasm(input, filename, true);
 }
 
 // load bytecode from file
@@ -39,7 +39,7 @@ void load_bytecode_file(char *file, char *filename) {
   file = read_file_fmmap(fd, file, &file_size);
   file == NULL ? exit(1) : 0;
   
-  disasm(file, filename);
+  disasm(file, filename, false);
   
   safe_munmap(file, file_size);
 }
