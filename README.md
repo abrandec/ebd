@@ -17,7 +17,7 @@ make
 ./ebd --input 600160020100 --output sample.etk
 
 sample.etk:
-
+-----------
 PUSH1 0x01
 PUSH1 0x02
 ADD
