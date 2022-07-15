@@ -16,18 +16,6 @@
 #include <sys/stat.h>
 #pragma GCC diagnostic ignored "-Wswitch-bool"
 
-const static char char_null_err[11] = "char null\0";
-const static char bytecode_max_err[36] = "bytecode size exceeds 87,784 bytes\0";
-const static char bytecode_min_err[34] = "bytecode size is less than 1 byte\0";
-const static char bytecode_invalid_err[21] = "bytecode is invalid\0";
-
-// print err msg and exit
-// @param err_msg: err msg to print
-void print_exit(const char *err_msg) {
-  printf(YELLOW "%s\n" RESET, err_msg);
-  exit(1);
-}
-
 struct parse_data {
   // file descriptor for mmap
   int fd;
@@ -104,19 +92,19 @@ int read_push(parse_data_t *parse_data, int *counter, bool is_push) {
 // should also be better at handling invalid bytecode
 // check if bytecode is valid & calculate size of output buffer
 // @param parse_data: struct for parsing bytecode
-int validate_bytecode(parse_data_t *parse_data) {
+void validate_bytecode(parse_data_t *parse_data) {
   int bytecode_size = strlen(parse_data->input);
   int bytecode_len = bytecode_size / 2;
   // validate bytecode size by checking if its even or odd (really lazy check,
   // ik)
   // does not account for whitespace in bytecode!
-  bytecode_size % 2 ? print_exit(bytecode_invalid_err) : 0;
+  bytecode_size % 2 ? print_error(BYTECODE_INVALID) : 0;
 
   int i = 0;
   for (; i < bytecode_len; ++i) {
     parse_data->opcode = hex_char2int(parse_data->input, 2 * i);
     read_push(parse_data, &i, false);
-    i >= bytecode_len ? print_exit(bytecode_invalid_err) : 0;
+    i >= bytecode_len ? print_error(BYTECODE_INVALID) : 0;
     ++parse_data->total_opcodes;
     parse_data->total_output_size += op_char_len[parse_data->opcode];
   }
@@ -124,7 +112,6 @@ int validate_bytecode(parse_data_t *parse_data) {
   // for spacing & null byte
   parse_data->total_output_size += parse_data->total_opcodes + 1;
   parse_data->total_opcodes = parse_data->total_opcodes;
-  return parse_data->total_output_size;
 }
 
 // parse bytecode into mneumonics
@@ -255,7 +242,7 @@ void _create_file(parse_data_t *parse_data) {
 void disasm(char *bytes, char *output_name) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
-  strlen(bytes) > 87785 ? print_exit(bytecode_max_err)
+  strlen(bytes) > 87785 ? print_error(BYTECODE_MAX_SIZE)
                           : 0;
 
   parse_data_t parse_data;
@@ -272,7 +259,7 @@ void disasm(char *bytes, char *output_name) {
   parse_data.output_offset = 0;
   parse_data.total_output_size = 0;
 
-  parse_data.total_output_size = validate_bytecode(&parse_data);
+  validate_bytecode(&parse_data);
 
   parse_data.output_name == NULL ? _mmap_alloc(&parse_data)
                                  : _create_file(&parse_data);

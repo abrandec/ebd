@@ -27,12 +27,12 @@ long file_size(FILE *fd, char *filename) {
   fd = fopen(filename, "r");
 
   if (!fd) {
-    custom_error(IO_FILE_OPEN_FAIL);
+    print_error(IO_FILE_OPEN_FAIL);
     return 0;
   }
 
   lseek(fileno(fd), -1, SEEK_CUR);
-  
+
   // return file size
   return ftell(fd);
 }
@@ -62,11 +62,10 @@ bool safe_munmap(char *file, long filesize) {
 
   munmap(file, filesize);
   // not sure if this is necessary
-  /* if (munmap(file, filesize) == -1) {
+  if (munmap(file, filesize) == -1) {
     perror("munmap");
     return false;
-  } */
-
+  }
   return true;
 }
 
@@ -78,7 +77,7 @@ bool safe_munmap(char *file, long filesize) {
 
 bool create_file(char *filename, char *data) {
   if (!filename) {
-    custom_error(IO_FILENAME_NULL);
+    print_error(IO_FILENAME_NULL);
     return false;
   }
 
@@ -103,14 +102,12 @@ bool create_file(char *filename, char *data) {
     map[i] = data[i];
   }
 
-  printf("%s\n", map);
-  
   // Write it now to disk
-  
- if (msync(map, textsize, MS_SYNC) == -1) {
+
+  if (msync(map, textsize, MS_SYNC) == -1) {
     perror("Could not sync the file to disk");
   }
-  
+
   // Don't forget to free the mmapped memory
   if (munmap(map, textsize) == -1) {
     close(fd);
@@ -132,7 +129,7 @@ bool create_file(char *filename, char *data) {
 
 char *read_file_fmmap(FILE *fd, char *filename) {
   if (!filename) {
-    custom_error(IO_FILENAME_NULL);
+    print_error(IO_FILENAME_NULL);
     return NULL;
   }
 
@@ -140,7 +137,7 @@ char *read_file_fmmap(FILE *fd, char *filename) {
   fd = fopen(filename, "r");
   // check if file exists
   if (!fd) {
-    custom_error(IO_FILE_OPEN_FAIL);
+    print_error(IO_FILE_OPEN_FAIL);
     return NULL;
   }
   // get file position
@@ -167,12 +164,12 @@ char *read_file_fmmap(FILE *fd, char *filename) {
 
 bool write_file_fmmap(FILE *fd, char *filename, char *data) {
   if (!filename) {
-    custom_error(IO_FILENAME_NULL);
+    print_error(IO_FILENAME_NULL);
     return false;
   }
 
   if (!data) {
-    custom_error(IO_DATA_NULL);
+    print_error(IO_DATA_NULL);
     return false;
   }
 
@@ -180,7 +177,7 @@ bool write_file_fmmap(FILE *fd, char *filename, char *data) {
 
   // check if file exists
   if (!fd) {
-    custom_error(IO_FILE_OPEN_FAIL);
+    print_error(IO_FILE_OPEN_FAIL);
     return false;
   }
 
@@ -201,13 +198,13 @@ bool create_folder(char *foldername) {
   if (ret == -1) {
     switch (errno) {
     case EACCES:
-      custom_error(IO_WRITE_ACCESS_ERR);
+      print_error(IO_WRITE_ACCESS_ERR);
       return false;
     case EEXIST:
-      custom_error(IO_FOLDER_NAME_ALREADY_EXISTS);
+      print_error(IO_FOLDER_NAME_ALREADY_EXISTS);
       return false;
     case ENAMETOOLONG:
-      custom_error(IO_FOLDER_NAME_TOO_LONG);
+      print_error(IO_FOLDER_NAME_TOO_LONG);
       return false;
     default:
       perror("mkdir");
@@ -285,11 +282,6 @@ void print_file(FILE *fd, char *filename) {
     perror("mmap");
     exit(EXIT_FAILURE);
   }
-
-  // File isn't necessarily loaded into memory until we access the
-  // memory (causing a page fault to occur and making the kernel
-  // handle it).
-  printf("%s\n", ptr);
 
   close(fd);
 }

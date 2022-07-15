@@ -5,8 +5,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void custom_error(uint8_t err_code) {
+void print_error(uint8_t err_code) {
   switch (err_code) {
+  // ┌───────────────────┐
+  // │   DISASM ERRORS   │
+  // └───────────────────┘
+  case BYTECODE_MAX_SIZE:
+    printf(YELLOW "Bytecode max size!\n" RESET);
+  case BYTECODE_MIN_SIZE:
+    printf(YELLOW "Bytecode min size!\n" RESET);
+  case BYTECODE_INVALID:
+    printf(YELLOW "Bytecode invalid!\n" RESET);
   // ┌───────────────────┐
   // │   IO ERRORS       │
   // └───────────────────┘
