@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wformat"
 
@@ -24,24 +25,17 @@ static const char *const usages[] = {
 // load bytecode from input
 // @param input: input bytecode
 // @param output: output name to write assembly to
-void load_bytecode_input(char *input, char *output) {
-  int file_size = strlen(input);
-  disasm(input, output);
-}
+void load_bytecode_input(char *input, char *output) { disasm(input, output); }
 
 // load bytecode from file
 // @param file: file to load bytecode from
 // @param filename: filename of file to load bytecode from
 void load_bytecode_file(char *file, char *output) {
   FILE *fd;
-  long file_size;
 
-  file = read_file_fmmap(fd, file, &file_size);
-  file == NULL ? exit(1) : 0;
-
+  file = read_file_fmmap(fd, file);
+  
   disasm(file, output);
-
-  safe_munmap(file, file_size);
 }
 
 // main program
