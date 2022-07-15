@@ -16,7 +16,7 @@
 #pragma GCC diagnostic ignored "-Wswitch-bool"
 
 const static char char_null_err[11] = "char null\0";
-const static char bytecode_max_err[34] = "bytecode size exceeds 3072 bytes\0";
+const static char bytecode_max_err[36] = "bytecode size exceeds 87,784 bytes\0";
 const static char bytecode_min_err[34] = "bytecode size is less than 1 byte\0";
 const static char bytecode_invalid_err[21] = "bytecode is invalid\0";
 
@@ -27,15 +27,33 @@ void print_exit(const char *err_msg) {
   exit(1);
 }
 
+struct parse_data {
+  // file descriptor for mmap
+  int fd;
+  // buffers
+  char *input;
+  char *output;
+  // optional output filename
+  char *output_name;
+  // offsets
+  int input_offset;
+  int output_offset;
+  // misc
+  int opcode;
+  int total_opcodes;
+  int total_output_size;
+};
+
+typedef struct parse_data parse_data_t;
+
 // read push op for offset stuff
-// @param opcode: opcode to read
-// @param total_size: for incrementing size for output
+// @param parse_data: struct for parsing bytecode
 // @param counter: program counter for reading the bytecode
 // @param is_push: if true, return the push opcode, otherwise increment
 // total_size and counter
 // @return: the push opcode if is_push is true, otherwise 0
-int read_push(int *opcode, int *total_size, int *counter, bool is_push) {
-  switch (*opcode) {
+int read_push(parse_data_t *parse_data, int *counter, bool is_push) {
+  switch (parse_data->opcode) {
   case 0x60:
   case 0x61:
   case 0x62:
@@ -70,12 +88,12 @@ int read_push(int *opcode, int *total_size, int *counter, bool is_push) {
   case 0x7F:
     switch (is_push) {
     case 0:
-      *counter += *opcode - 0x5F;
+      *counter += parse_data->opcode - 0x5F;
       // account for ' ', '0', 'x'
-      *total_size += ((*opcode - 0x5F) * 2) + 3;
+      parse_data->total_output_size += ((parse_data->opcode - 0x5F) * 2) + 3;
       return 0;
     case 1:
-      return *opcode - 0x5F;
+      return parse_data->opcode - 0x5F;
     }
   default:
     return 0;
@@ -83,198 +101,184 @@ int read_push(int *opcode, int *total_size, int *counter, bool is_push) {
 }
 
 // should also be better at handling invalid bytecode
-// check if bytecode is valid & calculate size of bytecode output file
-// @param bytecode: bytecode
-// @param total_opcodes: total number of opcodes in bytecode
-// @return: file size in bytes
-int validate_bytecode(char *bytecode, int *total_opcodes) {
-  int opcode = 0;
-  int total_ops = 0;
-  int total_file_size = 0;
-  int bytecode_size = strlen(bytecode);
+// check if bytecode is valid & calculate size of output buffer
+// @param parse_data: struct for parsing bytecode
+int validate_bytecode(parse_data_t *parse_data) {
+  int bytecode_size = strlen(parse_data->input);
   int bytecode_len = bytecode_size / 2;
   // validate bytecode size by checking if its even or odd (really lazy check,
   // ik)
+  // does not account for whitespace in bytecode!
   bytecode_size % 2 ? print_exit(bytecode_invalid_err) : 0;
 
   int i = 0;
   for (; i < bytecode_len; ++i) {
-    opcode = hex_char2int(bytecode, 2 * i);
-    read_push(&opcode, &total_file_size, &i, false);
+    parse_data->opcode = hex_char2int(parse_data->input, 2 * i);
+    read_push(parse_data, &i, false);
     i >= bytecode_len ? print_exit(bytecode_invalid_err) : 0;
-    ++total_ops;
-    total_file_size += op_char_len[opcode];
+    ++parse_data->total_opcodes;
+    parse_data->total_output_size += op_char_len[parse_data->opcode];
   }
 
   // for spacing & null byte
-  total_file_size += total_ops + 1;
-  *total_opcodes = total_ops;
-  return total_file_size;
+  parse_data->total_output_size += parse_data->total_opcodes + 1;
+  parse_data->total_opcodes = parse_data->total_opcodes;
+  return parse_data->total_output_size;
 }
 
 // parse bytecode into mneumonics
-// @param buf: buffer to store output in
-// @param bytecode: bytecode
-// @param opcode: for getting the opcode name & size
-// @param buf_offset: for incrementing the buffer offset
-// @param bytecode_offset: for incrementing the bytecode offset
-void parser(char *buf, char *bytes, int *opcode, int *buf_offset,
-            int *bytecode_offset) {
+// @param parse_data: struct for parsing bytecode
+void parser(parse_data_t *parse_data) {
 
   // just passing in random pointers to use this function, only opcode &&
   // is_push are used
-  int push_val = read_push(opcode, buf_offset, bytecode_offset, true);
+  int push_val = read_push(parse_data, &parse_data->input_offset, true);
 
   if (push_val != 0) {
-    for (int i = 0; i < op_char_len[*opcode]; ++i) {
-      buf[*buf_offset] = op_names[*opcode][i];
-      ++*buf_offset;
+    for (int i = 0; i < op_char_len[parse_data->opcode]; ++i) {
+      parse_data->output[parse_data->output_offset] =
+          op_names[parse_data->opcode][i];
+      ++parse_data->output_offset;
     }
 
-    buf[*buf_offset] = ' ';
-    ++*buf_offset;
-    buf[*buf_offset] = '0';
-    ++*buf_offset;
-    buf[*buf_offset] = 'x';
-    ++*buf_offset;
+    parse_data->output[parse_data->output_offset] = ' ';
+    ++parse_data->output_offset;
+    parse_data->output[parse_data->output_offset] = '0';
+    ++parse_data->output_offset;
+    parse_data->output[parse_data->output_offset] = 'x';
+    ++parse_data->output_offset;
 
     // num bytes to eat from push opcode
     int nom = push_val * 2;
     // increment offset to consume bytes
-    *bytecode_offset += 2;
+    parse_data->input_offset += 2;
 
-    for (int i = 0; i < nom; ++i) {
-      buf[*buf_offset] = bytes[*bytecode_offset + i];
-      ++*buf_offset;
+    int i = 0;
+    for (; i < nom; ++i) {
+      parse_data->output[parse_data->output_offset] =
+          parse_data->input[parse_data->input_offset + i];
+      ++parse_data->output_offset;
     }
 
-    buf[*buf_offset] = '\n';
+    parse_data->output[parse_data->output_offset] = '\n';
 
-    ++*buf_offset;
-    *bytecode_offset += nom;
-
+    ++parse_data->output_offset;
+    parse_data->input_offset += nom;
   } else {
-    for (int i = 0; i < op_char_len[*opcode]; ++i) {
-      buf[*buf_offset] = op_names[*opcode][i];
-      ++*buf_offset;
+    int i = 0;
+    for (; i < op_char_len[parse_data->opcode]; ++i) {
+      parse_data->output[parse_data->output_offset] =
+          op_names[parse_data->opcode][i];
+      ++parse_data->output_offset;
     }
 
-    buf[*buf_offset] = '\n';
-    ++*buf_offset;
-    *bytecode_offset += 2;
+    parse_data->output[parse_data->output_offset] = '\n';
+    ++parse_data->output_offset;
+    parse_data->input_offset += 2;
   }
 }
 
 // for looping through the bytecode and parsing it
-// @param buf: buffer to store output in
-// @param filesize: file size in bytes
-// @param total_opcodes: total number of opcodes in bytecode
-void loopty_loop(char *buf, char *bytes, int filesize, int *total_opcodes) {
-  int opcode = 0;
-  int buf_offset = 0;
-  int bytecode_offset = 0;
+// @param parse_data: struct for parsing bytecode
+void loopty_loop(parse_data_t *parse_data) {
 
   int i = 0;
-  for (; i < *total_opcodes; ++i) {
-    opcode = hex_char2int(bytes, bytecode_offset);
-    parser(buf, bytes, &opcode, &buf_offset, &bytecode_offset);
+  for (; i < parse_data->total_opcodes; ++i) {
+    parse_data->opcode =
+        hex_char2int(parse_data->input, parse_data->input_offset);
+    parser(parse_data);
   }
 }
 
-// create temp file for disassembled bytecode
-// @param bytecode: bytecode
-// @param filename: filename to create
-void _temp_file(char *bytes, int filesize, int *total_opcodes) {
-  const char *filename = "/tmp/ebd.temp";
-
-  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
-
-  if (write(fd, "", filesize - 1) == -1) {
-    close(fd);
-    perror("Error writing last byte of the file");
-    exit(EXIT_FAILURE);
-  }
-
-  char *map = mmap(0, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  if (map == MAP_FAILED) {
-    close(fd);
+// allocate memory for the output_name buffer using mmap
+// @param parse_data: struct for parsing bytecode
+void _mmap_alloc(parse_data_t *parse_data) {
+  parse_data->output =
+      mmap(0, parse_data->total_output_size, PROT_READ | PROT_WRITE,
+           MAP_PRIVATE | MAP_ANON, parse_data->fd, 0);
+  if (parse_data->output_name == MAP_FAILED) {
     perror("Error mmapping the file");
     exit(EXIT_FAILURE);
   }
 
-  loopty_loop(map, bytes, filesize, total_opcodes);
+  loopty_loop(parse_data);
 
-  printf("%s\n", map);
+  fprintf(stderr, "%s\n", parse_data->output);
 
   // Don't forget to free the mmapped memory
-  if (munmap(map, filesize) == -1) {
-    close(fd);
+  if (munmap(parse_data->output, parse_data->total_output_size) == -1) {
     perror("Error un-mmapping the file");
     exit(EXIT_FAILURE);
   }
-
-  // Un-mmaping doesn't close the file, so we still need to do that.
-  close(fd);
 }
 
 // create file from bytecode
-// @param bytecode: bytecode
-// @param filename: filename to create
-void _create_file(char *bytes, char *filename, int filesize,
-                  int *total_opcodes) {
-  if (!filename) {
+// @param parse_data: struct for parsing bytecode
+void _create_file(parse_data_t *parse_data) {
+  if (!parse_data->output_name) {
     custom_error(IO_FILENAME_NULL);
     return;
   }
 
-  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+  parse_data->fd =
+      open(parse_data->output_name, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
 
-  if (write(fd, "", filesize - 1) == -1) {
-    close(fd);
+  if (write(parse_data->fd, "", parse_data->total_output_size - 1) == -1) {
+    close(parse_data->fd);
     perror("Error writing last byte of the file");
     exit(EXIT_FAILURE);
   }
 
-  char *map = mmap(0, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  if (map == MAP_FAILED) {
-    close(fd);
+  parse_data->output =
+      mmap(0, parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+           parse_data->fd, 0);
+  if (parse_data->output == MAP_FAILED) {
+    close(parse_data->fd);
     perror("Error mmapping the file");
     exit(EXIT_FAILURE);
   }
 
-  loopty_loop(map, bytes, filesize, total_opcodes);
-
-  // printf("%s\n", map);
+  loopty_loop(parse_data);
 
   // Write it now to disk
-  if (msync(map, filesize, MS_SYNC) == -1) {
+  if (msync(parse_data->output, parse_data->total_output_size, MS_SYNC) == -1) {
     perror("Could not sync the file to disk");
   }
 
   // Don't forget to free the mmapped memory
-  if (munmap(map, filesize) == -1) {
-    close(fd);
+  if (munmap(parse_data->output, parse_data->total_output_size) == -1) {
+    close(parse_data->fd);
     perror("Error un-mmapping the file");
     exit(EXIT_FAILURE);
   }
 
   // Un-mmaping doesn't close the file, so we still need to do that.
-  close(fd);
+  close(parse_data->fd);
 }
 
-void disasm(char *bytes, char *filename, bool output) {
+void disasm(char *bytes, char *output_name) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
-  bytes == NULL          ? print_exit(char_null_err)
-  : strlen(bytes) > 3073 ? print_exit(bytecode_max_err)
-                         : 0;
+  bytes == NULL           ? print_exit(char_null_err)
+  : strlen(bytes) > 87785 ? print_exit(bytecode_max_err)
+                          : 0;
 
-  int total_opcodes = 0;
+  parse_data_t parse_data;
 
-  int file_size = validate_bytecode(bytes, &total_opcodes);
+  // init pointers
+  parse_data.input = bytes;
+  parse_data.output_name = output_name;
 
-  // if output == true then create a file with the disassembled bytecode, else
-  // create a temp file to mmap and ouput disassembled bytecode to stdout
-  output ? _create_file(bytes, filename, file_size, &total_opcodes)
-         : _temp_file(bytes, file_size, &total_opcodes);
+  // init data for parsing bytecode
+  // set to -1 for _mmap_alloc, _create_file will change it to the output file
+  parse_data.fd = -1;
+  parse_data.total_opcodes = 0;
+  parse_data.input_offset = 0;
+  parse_data.output_offset = 0;
+  parse_data.total_output_size = 0;
+
+  parse_data.total_output_size = validate_bytecode(&parse_data);
+
+  parse_data.output_name == NULL ? _mmap_alloc(&parse_data)
+                                 : _create_file(&parse_data);
 }
