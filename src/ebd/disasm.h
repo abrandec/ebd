@@ -5,8 +5,7 @@
 
 // EVM bytecode disassembler
 // @param bytes: bytecode to disassemble
-// @param filename: filename to write disassembly to
-// @param output: true if output should be written to stdout, false if output should be written to file
-void disasm(char *bytes, char *filename, bool output);
+// @param output: output file to write the disassembled bytecode to
+void disasm(char *bytes, char *output);
 
 #endif
