@@ -23,23 +23,23 @@ static const char *const usages[] = {
 
 // load bytecode from input
 // @param input: input bytecode
-// @param filename: filename to write disassembled bytecode to
-void load_bytecode_input(char *input, char *filename, bool output_bool) {
+// @param output: output name to write assembly to
+void load_bytecode_input(char *input, char *output) {
   int file_size = strlen(input);
-  disasm(input, filename, output_bool);
+  disasm(input, output);
 }
 
 // load bytecode from file
 // @param file: file to load bytecode from
 // @param filename: filename of file to load bytecode from
-void load_bytecode_file(char *file, char *filename, bool output_bool) {
+void load_bytecode_file(char *file, char *output) {
   FILE *fd;
   long file_size;
 
   file = read_file_fmmap(fd, file, &file_size);
   file == NULL ? exit(1) : 0;
 
-  disasm(file, filename, output_bool);
+  disasm(file, output);
 
   safe_munmap(file, file_size);
 }
@@ -51,8 +51,6 @@ int main(int argc, const char *argv[]) {
   char *file = NULL;
   char *input = NULL;
   char *output = NULL;
-
-  bool output_bool = true;
 
   struct argparse_option options[] = {
       OPT_GROUP("Commands"),
@@ -72,17 +70,15 @@ int main(int argc, const char *argv[]) {
   // ┌───────────────────┐
   // │   INPUT BYTECODE  │
   // └───────────────────┘
-  if (input != NULL && file == NULL) {
-    output == NULL ? output_bool = false : 0;
-    load_bytecode_input(input, output, output_bool);
+  if (file == NULL) {
+    load_bytecode_input(input, output);
   }
 
   // ┌───────────────────────────┐
   // │   READ FILE WITH BYTCODE  │
   // └───────────────────────────┘
-  if (file != NULL && input == NULL) {
-    output == NULL ? output_bool = false : 0;
-    load_bytecode_file(file, output, output_bool);
+  if (file != NULL) {
+    load_bytecode_file(file, output);
   }
 
   // ┌───────────────────────────────────┐
