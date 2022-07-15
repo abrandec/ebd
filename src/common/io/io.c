@@ -24,11 +24,6 @@
  */
 
 long file_size(FILE *fd, char *filename) {
-  if (!filename) {
-    custom_error(IO_FILENAME_NULL);
-    return 0;
-  }
-
   fd = fopen(filename, "r");
 
   if (!fd) {
@@ -36,13 +31,10 @@ long file_size(FILE *fd, char *filename) {
     return 0;
   }
 
-  fseek(fd, 0, SEEK_END);
-  // get file size
-  long ret = ftell(fd);
-
-  fclose(fd);
-
-  return ret;
+  lseek(fileno(fd), -1, SEEK_CUR);
+  
+  // return file size
+  return ftell(fd);
 }
 
 /*
@@ -94,7 +86,7 @@ bool create_file(char *filename, char *data) {
 
   size_t textsize = strlen(data) + 1; // + \0 null character
 
-  if (write(fd, "", textsize - 1) == -1) {
+  if (write(fd, "", textsize) == -1) {
     close(fd);
     perror("Error writing last byte of the file");
     exit(EXIT_FAILURE);
@@ -138,7 +130,7 @@ bool create_file(char *filename, char *data) {
   └───────────────────────────────┘
  */
 
-char *read_file_fmmap(FILE *fd, char *filename, long *filesize) {
+char *read_file_fmmap(FILE *fd, char *filename) {
   if (!filename) {
     custom_error(IO_FILENAME_NULL);
     return NULL;
@@ -152,7 +144,7 @@ char *read_file_fmmap(FILE *fd, char *filename, long *filesize) {
     return NULL;
   }
   // get file position
-  fseek(fd, 0, SEEK_END);
+  lseek(fileno(fd), 0, SEEK_END);
 
   // get file size
   long filesize_ = ftell(fd);
@@ -163,8 +155,6 @@ char *read_file_fmmap(FILE *fd, char *filename, long *filesize) {
   // fclose does not unmap file so it's fine to call & it's portable
   // https://pubs.opengroup.org/onlinepubs/7908799/xsh/mmap.html
   fclose(fd);
-
-  *filesize = filesize_;
 
   return str;
 }

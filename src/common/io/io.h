@@ -11,10 +11,11 @@
  */
 
 // get the size of a file
+// does not fclose the file descriptor
 // @param fd: file descriptor
 // @param filename: the file to get the size of
 // @return the size of the file
-long file_size(FILE *fd, char *filename);
+off_t file_size(FILE *fd, char *filename);
 
 /*
   ┌───────────────────────────────┐
@@ -62,9 +63,8 @@ bool create_file(char *filename, char *data);
 // read a file using fmmap
 // @param fd: file descriptor
 // @param filename: the file to read
-// @param filesize: return the size of the file
 // @return file contents
-char *read_file_fmmap(FILE *fd, char *filename, long *filesize);
+char *read_file_fmmap(FILE *fd, char *filename);
 
 /*
   ┌───────────────────────────────┐
