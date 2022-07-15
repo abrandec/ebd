@@ -42,8 +42,8 @@ void load_bytecode_file(char *file, char *output) {
 int main(int argc, const char *argv[]) {
 
   // to hold input and file chars from argparse
-  char *file = NULL;
   char *input = NULL;
+  char *file = NULL;
   char *output = NULL;
 
   struct argparse_option options[] = {
