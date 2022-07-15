@@ -12,7 +12,8 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
 #pragma GCC diagnostic ignored "-Wswitch-bool"
 
 const static char char_null_err[11] = "char null\0";
@@ -36,8 +37,8 @@ struct parse_data {
   // optional output filename
   char *output_name;
   // offsets
-  int input_offset;
-  int output_offset;
+  off_t input_offset;
+  off_t output_offset;
   // misc
   int opcode;
   int total_opcodes;
@@ -203,7 +204,7 @@ void _mmap_alloc(parse_data_t *parse_data) {
 
   loopty_loop(parse_data);
 
-  fprintf(stderr, "%s\n", parse_data->output);
+  write(STDOUT_FILENO, parse_data->output, parse_data->total_output_size);
 
   // Don't forget to free the mmapped memory
   if (munmap(parse_data->output, parse_data->total_output_size) == -1) {
@@ -215,11 +216,6 @@ void _mmap_alloc(parse_data_t *parse_data) {
 // create file from bytecode
 // @param parse_data: struct for parsing bytecode
 void _create_file(parse_data_t *parse_data) {
-  if (!parse_data->output_name) {
-    custom_error(IO_FILENAME_NULL);
-    return;
-  }
-
   parse_data->fd =
       open(parse_data->output_name, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
 
@@ -259,8 +255,7 @@ void _create_file(parse_data_t *parse_data) {
 void disasm(char *bytes, char *output_name) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
-  bytes == NULL           ? print_exit(char_null_err)
-  : strlen(bytes) > 87785 ? print_exit(bytecode_max_err)
+  strlen(bytes) > 87785 ? print_exit(bytecode_max_err)
                           : 0;
 
   parse_data_t parse_data;
