@@ -34,6 +34,9 @@
         "variant": "c",
         "*.inc": "c",
         "*.rh": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "mman_def.h": "c",
+        "errno.h": "c",
+        "mman.h": "c"
     }
 }
