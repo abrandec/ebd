@@ -41,7 +41,7 @@ void print_error(uint8_t err_code) {
     printf(YELLOW"Folder name is too long!\n"RESET);
     break;
   default:
-    printf("Unknown error!\n"RESET);
+    printf(YELLOW"Unknown error!\n"RESET);
     break;
   }
   exit(1);
