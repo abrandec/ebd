@@ -1,6 +1,6 @@
 # Ethereum Bytecode Disassembler
 
-## Decompiles EVM bytecode to ETK
+## Decompiles EVM bytecode to Opcode Mnemonics
 
 # Building
 ```
@@ -14,9 +14,9 @@ make
 
 ### Sample
 ```
-./ebd --input 600160020100 --output sample.etk
+./ebd --input 600160020100 --output sample
 
-sample.etk:
+sample:
 -----------
 PUSH1 0x01
 PUSH1 0x02
