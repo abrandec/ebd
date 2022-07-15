@@ -64,14 +64,14 @@ int main(int argc, const char *argv[]) {
   // ┌───────────────────┐
   // │   INPUT BYTECODE  │
   // └───────────────────┘
-  if (file == NULL) {
+  if (input != NULL && file == NULL) {
     load_bytecode_input(input, output);
   }
 
   // ┌───────────────────────────┐
   // │   READ FILE WITH BYTCODE  │
   // └───────────────────────────┘
-  if (file != NULL) {
+  if (file != NULL && input == NULL) {
     load_bytecode_file(file, output);
   }
 
