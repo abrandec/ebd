@@ -1,0 +1,5 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/a/Documents/github/ebd'
+clang -o bin/ebd/ebd src/errors/errors.c src/common/utils/hex_utils/hex_utils.c src/common/cmd/argparse/argparse.c src/common/io/io.c src/ebd/disasm.c src/ebd/main.c -lm
+make: Leaving directory '/home/a/Documents/github/ebd'
+ 
