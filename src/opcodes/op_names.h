@@ -257,9 +257,9 @@ static const char *op_names[256] = {
     /* 0xf8 */ NULL,
     /* 0xf9 */ NULL,
     /* 0xfa */ "STATICCALL",
-    /* 0xfb */ "REVERT",
+    /* 0xfb */ NULL,
     /* 0xfc */ NULL,
-    /* 0xfd */ NULL,
+    /* 0xfd */ "REVERT",
     /* 0xfe */ "INVALID",
     /* 0xff */ "SELFDESTRUCT",
 };
@@ -519,7 +519,7 @@ static const int op_char_len[256] = {
     /* 0xfa */ 10,
     /* 0xfb */ 6,
     /* 0xfc */ NULL,
-    /* 0xfd */ NULL,
+    /* 0xfd */ 6,
     /* 0xfe */ 7,
     /* 0xff */ 12,
 };
