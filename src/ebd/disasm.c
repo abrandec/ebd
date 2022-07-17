@@ -209,11 +209,11 @@ void _create_file(parse_data_t *parse_data) {
     exit(EXIT_FAILURE);
   }
 
-  // update mmap size to match file size to stop bus error
-  ftruncate(parse_data->fd, parse_data->total_output_size);
+  // update mmap size to match file size to prevent bus error
+  ftruncate(parse_data->fd, parse_data->total_output_size - 1);
 
   parse_data->output =
-      mmap(0, parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+      mmap(0, parse_data->total_output_size - 1, PROT_READ | PROT_WRITE, MAP_SHARED,
            parse_data->fd, 0);
 
   if (parse_data->output == MAP_FAILED) {
