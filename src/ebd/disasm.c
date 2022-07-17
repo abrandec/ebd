@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #pragma GCC diagnostic ignored "-Wswitch-bool"
 
 struct parse_data {
