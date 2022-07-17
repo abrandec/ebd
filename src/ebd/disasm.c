@@ -212,8 +212,11 @@ void _create_file(parse_data_t *parse_data) {
     exit(EXIT_FAILURE);
   }
 
+  // update mmap size to match file size to stop bus error
+  ftruncate(parse_data->fd, parse_data->total_output_size);
+  
   parse_data->output =
-      mmap(0, parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+      mmap(0,  parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
            parse_data->fd, 0);
   if (parse_data->output == MAP_FAILED) {
     close(parse_data->fd);
@@ -242,9 +245,9 @@ void _create_file(parse_data_t *parse_data) {
 void disasm(char *bytes, char *output_name) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
-  strlen(bytes) > 87785 ? print_error(BYTECODE_MAX_SIZE)
+/*   strlen(bytes) > 87785 ? print_error(BYTECODE_MAX_SIZE)
                           : 0;
-
+ */
   parse_data_t parse_data;
 
   // init pointers
