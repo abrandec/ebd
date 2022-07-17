@@ -116,9 +116,6 @@ void validate_bytecode(parse_data_t *parse_data) {
 // parse bytecode into mneumonics
 // @param parse_data: struct for parsing bytecode
 void parser(parse_data_t *parse_data) {
-
-  // just passing in random pointers to use this function, only opcode &&
-  // is_push are used
   int push_val = read_push(parse_data, &parse_data->input_offset, true);
 
   if (push_val != 0) {
