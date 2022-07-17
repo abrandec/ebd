@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #pragma GCC diagnostic ignored "-Wswitch-bool"
 
@@ -96,9 +96,7 @@ int read_push(parse_data_t *parse_data, int *counter, bool is_push) {
 void validate_bytecode(parse_data_t *parse_data) {
   int bytecode_size = strlen(parse_data->input);
   int bytecode_len = bytecode_size / 2;
-  // validate bytecode size by checking if its even or odd (really lazy check,
-  // ik)
-  // does not account for whitespace in bytecode!
+  // validate bytecode size by checking if its even or odd
   bytecode_size % 2 ? print_error(BYTECODE_INVALID) : 0;
 
   int i = 0;
@@ -148,9 +146,7 @@ void parser(parse_data_t *parse_data) {
           parse_data->input[parse_data->input_offset + i];
       ++parse_data->output_offset;
     }
-
     parse_data->output[parse_data->output_offset] = '\n';
-
     ++parse_data->output_offset;
     parse_data->input_offset += nom;
   } else {
@@ -215,10 +211,11 @@ void _create_file(parse_data_t *parse_data) {
 
   // update mmap size to match file size to stop bus error
   ftruncate(parse_data->fd, parse_data->total_output_size);
-  
+
   parse_data->output =
-      mmap(0,  parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+      mmap(0, parse_data->total_output_size, PROT_READ | PROT_WRITE, MAP_SHARED,
            parse_data->fd, 0);
+
   if (parse_data->output == MAP_FAILED) {
     close(parse_data->fd);
     perror("Error mmapping the file");
@@ -246,9 +243,8 @@ void _create_file(parse_data_t *parse_data) {
 void disasm(char *bytes, char *output_name) {
   // check if bytes is null and if bytes exceeds 3073 bytes (max bytecode len +
   // '\0')
-/*   strlen(bytes) > 87785 ? print_error(BYTECODE_MAX_SIZE)
-                          : 0;
- */
+  strlen(bytes) > 87785 ? print_error(BYTECODE_MAX_SIZE) : 0;
+
   parse_data_t parse_data;
 
   // init pointers
